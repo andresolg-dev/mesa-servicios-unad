@@ -1,18 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { TicketCard } from '@/components/ticket-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Plus, Search, Ticket, Loader2 } from 'lucide-react'
@@ -34,7 +34,7 @@ interface TicketData {
   createdAt: string
 }
 
-export default function TicketsPage() {
+function TicketsContent() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const [tickets, setTickets] = useState<TicketData[]>([])
@@ -63,43 +63,24 @@ export default function TicketsPage() {
         setLoading(false)
       }
     }
-
     fetchTickets()
   }, [])
 
   useEffect(() => {
     let result = [...tickets]
-
-    // Search filter
     if (search) {
-      const searchLower = search.toLowerCase()
-      result = result.filter(t => 
-        t.title.toLowerCase().includes(searchLower) ||
-        t.description.toLowerCase().includes(searchLower) ||
-        t.ticketNumber.toLowerCase().includes(searchLower)
+      const q = search.toLowerCase()
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q) ||
+          t.ticketNumber.toLowerCase().includes(q)
       )
     }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      result = result.filter(t => t.status === statusFilter)
-    }
-
-    // Category filter
-    if (categoryFilter !== 'all') {
-      result = result.filter(t => t.category === categoryFilter)
-    }
-
-    // Priority filter
-    if (priorityFilter !== 'all') {
-      result = result.filter(t => t.priority === priorityFilter)
-    }
-
-    // Level filter
-    if (levelFilter !== 'all') {
-      result = result.filter(t => t.assignedLevel === levelFilter)
-    }
-
+    if (statusFilter !== 'all') result = result.filter((t) => t.status === statusFilter)
+    if (categoryFilter !== 'all') result = result.filter((t) => t.category === categoryFilter)
+    if (priorityFilter !== 'all') result = result.filter((t) => t.priority === priorityFilter)
+    if (levelFilter !== 'all') result = result.filter((t) => t.assignedLevel === levelFilter)
     setFilteredTickets(result)
   }, [search, statusFilter, categoryFilter, priorityFilter, levelFilter, tickets])
 
@@ -113,13 +94,10 @@ export default function TicketsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tickets</h1>
-          <p className="text-muted-foreground">
-            {filteredTickets.length} tickets encontrados
-          </p>
+          <p className="text-muted-foreground">{filteredTickets.length} tickets encontrados</p>
         </div>
         <Link href="/tickets/new">
           <Button>
@@ -129,7 +107,6 @@ export default function TicketsPage() {
         </Link>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
@@ -146,46 +123,38 @@ export default function TicketsPage() {
             </div>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Estado" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los estados</SelectItem>
-                {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                {Object.entries(STATUS_LABELS).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>{l}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Categoría" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Categoría" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las categorías</SelectItem>
-                {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                {Object.entries(CATEGORY_LABELS).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>{l}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Prioridad" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Prioridad" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las prioridades</SelectItem>
-                {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                {Object.entries(PRIORITY_LABELS).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>{l}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             {isTechnician && (
               <Select value={levelFilter} onValueChange={setLevelFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Nivel" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Nivel" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los niveles</SelectItem>
                   <SelectItem value="tecnico_n1">Nivel 1</SelectItem>
@@ -198,7 +167,6 @@ export default function TicketsPage() {
         </CardContent>
       </Card>
 
-      {/* Tickets List */}
       {filteredTickets.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTickets.map((ticket) => (
@@ -210,8 +178,8 @@ export default function TicketsPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Ticket className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              {tickets.length === 0 
-                ? 'No hay tickets registrados' 
+              {tickets.length === 0
+                ? 'No hay tickets registrados'
                 : 'No se encontraron tickets con los filtros seleccionados'}
             </p>
             {tickets.length === 0 && (
@@ -226,5 +194,19 @@ export default function TicketsPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+export default function TicketsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <TicketsContent />
+    </Suspense>
   )
 }
