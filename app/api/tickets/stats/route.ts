@@ -7,7 +7,11 @@ async function getSession() {
   const cookieStore = await cookies()
   const session = cookieStore.get('session')
   if (!session) return null
-  return JSON.parse(session.value)
+  try {
+    return JSON.parse(session.value)
+  } catch {
+    return null
+  }
 }
 
 export async function GET() {
@@ -73,6 +77,12 @@ export async function GET() {
       { $group: { _id: '$priority', count: { $sum: 1 } } },
     ])
 
+    // Get level distribution
+    const levelStats = await Ticket.aggregate([
+      { $match: baseQuery },
+      { $group: { _id: '$assignedLevel', count: { $sum: 1 } } },
+    ])
+
     // Get satisfaction average
     const satisfactionStats = await Ticket.aggregate([
       { $match: { ...baseQuery, 'satisfactionSurvey.rating': { $exists: true } } },
@@ -124,6 +134,11 @@ export async function GET() {
         }, {} as Record<string, number>),
         satisfactionAverage: satisfactionStats[0]?.avgRating || 0,
         satisfactionCount: satisfactionStats[0]?.count || 0,
+        levelDistribution: levelStats.reduce((acc, { _id, count }) => {
+          const num = _id === 'tecnico_n1' ? 1 : _id === 'tecnico_n2' ? 2 : _id === 'tecnico_n3' ? 3 : null
+          if (num) acc[num] = count
+          return acc
+        }, {} as Record<number, number>),
         recentTickets,
         weeklyTrend,
       },

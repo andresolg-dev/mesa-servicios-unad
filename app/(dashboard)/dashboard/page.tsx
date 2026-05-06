@@ -111,6 +111,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [activityTab, setActivityTab] = useState<'today' | 'yesterday' | 'week'>('today')
 
   const isTechnician = user?.role?.startsWith('tecnico') || user?.role === 'admin'
 
@@ -153,7 +154,24 @@ export default function DashboardPage() {
 
   const totalWeek = stats?.weeklyTrend?.reduce((a, b) => a + b.tickets, 0) || 0
   const chartData = stats?.weeklyTrend || []
-  const recentTickets = stats?.recentTickets || []
+  const allRecentTickets = stats?.recentTickets || []
+
+  const recentTickets = allRecentTickets.filter((t) => {
+    const updated = new Date(t.updatedAt)
+    const now = new Date()
+    if (activityTab === 'today') {
+      return updated.toDateString() === now.toDateString()
+    }
+    if (activityTab === 'yesterday') {
+      const yesterday = new Date(now)
+      yesterday.setDate(now.getDate() - 1)
+      return updated.toDateString() === yesterday.toDateString()
+    }
+    // week
+    const weekAgo = new Date(now)
+    weekAgo.setDate(now.getDate() - 7)
+    return updated >= weekAgo
+  })
 
   return (
     <div className="space-y-6">
@@ -310,9 +328,18 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-sm font-medium">Últimas Actualizaciones</CardTitle>
             <div className="flex items-center gap-1 text-xs">
-              <button className="px-2 py-1 rounded bg-primary text-primary-foreground font-medium">Hoy</button>
-              <button className="px-2 py-1 rounded text-muted-foreground hover:bg-accent">Ayer</button>
-              <button className="px-2 py-1 rounded text-muted-foreground hover:bg-accent">Semana</button>
+              <button
+                onClick={() => setActivityTab('today')}
+                className={activityTab === 'today' ? 'px-2 py-1 rounded bg-primary text-primary-foreground font-medium' : 'px-2 py-1 rounded text-muted-foreground hover:bg-accent'}
+              >Hoy</button>
+              <button
+                onClick={() => setActivityTab('yesterday')}
+                className={activityTab === 'yesterday' ? 'px-2 py-1 rounded bg-primary text-primary-foreground font-medium' : 'px-2 py-1 rounded text-muted-foreground hover:bg-accent'}
+              >Ayer</button>
+              <button
+                onClick={() => setActivityTab('week')}
+                className={activityTab === 'week' ? 'px-2 py-1 rounded bg-primary text-primary-foreground font-medium' : 'px-2 py-1 rounded text-muted-foreground hover:bg-accent'}
+              >Semana</button>
             </div>
           </CardHeader>
           <CardContent className="px-4">

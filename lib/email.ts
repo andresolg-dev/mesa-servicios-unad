@@ -55,9 +55,11 @@ function priorityLabel(p: string) {
 
 function categoryLabel(c: string) {
   const map: Record<string, string> = {
-    hardware: 'Hardware', software: 'Software', red: 'Red / Conectividad',
-    acceso: 'Acceso / Permisos', correo: 'Correo electrónico',
-    aplicacion: 'Aplicación', otro: 'Otro',
+    aplicacion: 'Aplicación',
+    conectividad: 'Conectividad',
+    equipo: 'Equipo',
+    usuarios: 'Usuarios',
+    contrasenas: 'Contraseñas',
   }
   return map[c] || c
 }
@@ -124,4 +126,48 @@ export async function sendTicketResolved(ticket: TicketInfo) {
     </table>
   `
   await send(ticket.createdByEmail, `[${ticket.ticketNumber}] Ticket resuelto`, baseTemplate('Ticket Resuelto', body))
+}
+
+export async function sendCommentAdded(
+  ticket: TicketInfo,
+  comment: { authorName: string; content: string },
+  toEmail: string,
+  toName: string,
+) {
+  const body = `
+    <p>Hola <strong>${toName}</strong>,</p>
+    <p>Se ha añadido un nuevo comentario en el ticket <strong>${ticket.ticketNumber}</strong>.</p>
+    <table>
+      <tr><td>N° Ticket</td><td><strong>${ticket.ticketNumber}</strong></td></tr>
+      <tr><td>Título</td><td>${ticket.title}</td></tr>
+      <tr><td>Comentario de</td><td>${comment.authorName}</td></tr>
+    </table>
+    <div style="background:#f3f4f6;border-left:4px solid #1e40af;padding:12px 16px;margin:16px 0;border-radius:4px;font-size:14px;">
+      ${comment.content}
+    </div>
+    <p style="font-size:13px;color:#6b7280;">Ingresa al portal para responder.</p>
+  `
+  await send(toEmail, `[${ticket.ticketNumber}] Nuevo comentario`, baseTemplate('Nuevo Comentario', body))
+}
+
+export async function sendTicketEscalatedToTechs(
+  ticket: TicketInfo,
+  newLevelLabel: string,
+  techEmails: string[],
+) {
+  const body = `
+    <p>Se ha escalado un ticket a tu nivel de soporte (<strong>${newLevelLabel}</strong>). Ingresa al portal para tomarlo.</p>
+    <table>
+      <tr><td>N° Ticket</td><td><strong>${ticket.ticketNumber}</strong></td></tr>
+      <tr><td>Título</td><td>${ticket.title}</td></tr>
+      <tr><td>Categoría</td><td>${categoryLabel(ticket.category)}</td></tr>
+      <tr><td>Prioridad</td><td><span class="badge badge-${ticket.priority}">${priorityLabel(ticket.priority)}</span></td></tr>
+      <tr><td>Solicitante</td><td>${ticket.createdByName}</td></tr>
+    </table>
+  `
+  await Promise.all(
+    techEmails.map(email =>
+      send(email, `[${ticket.ticketNumber}] Ticket escalado a tu nivel`, baseTemplate('Ticket Disponible', body))
+    )
+  )
 }

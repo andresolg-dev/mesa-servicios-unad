@@ -99,6 +99,7 @@ const levelLabels: Record<string, string> = {
 export function TicketDetail({ ticket, onUpdate }: TicketDetailProps) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [assignError, setAssignError] = useState('')
   const [comment, setComment] = useState('')
   const [escalationReason, setEscalationReason] = useState('')
   const [showEscalateDialog, setShowEscalateDialog] = useState(false)
@@ -141,6 +142,7 @@ export function TicketDetail({ ticket, onUpdate }: TicketDetailProps) {
       if (res.ok) {
         onUpdate()
       }
+      return res
     } catch (err) {
       console.error(err)
     } finally {
@@ -148,7 +150,14 @@ export function TicketDetail({ ticket, onUpdate }: TicketDetailProps) {
     }
   }
 
-  const handleTakeTicket = () => updateTicket('assign')
+  const handleTakeTicket = async () => {
+    setAssignError('')
+    const res = await updateTicket('assign')
+    if (res?.status === 409) {
+      setAssignError('Este ticket ya fue tomado por otro técnico.')
+      onUpdate()
+    }
+  }
   const handleResolve = () => updateTicket('resolve', { comment: 'Ticket resuelto' })
 
   const handleEscalate = async () => {
@@ -268,12 +277,15 @@ export function TicketDetail({ ticket, onUpdate }: TicketDetailProps) {
           <CardHeader>
             <CardTitle className="text-lg">Acciones</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
+          <CardContent className="flex flex-wrap gap-2 items-center">
             {canTakeTicket && (
               <Button onClick={handleTakeTicket} disabled={loading}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <User className="mr-2 h-4 w-4" />}
                 Tomar Ticket
               </Button>
+            )}
+            {assignError && (
+              <p className="text-sm text-destructive">{assignError}</p>
             )}
             {canResolve && (
               <Button onClick={handleResolve} disabled={loading} variant="default">

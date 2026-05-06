@@ -1,19 +1,7 @@
 'use client'
 
+import Chart from 'react-apexcharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
-} from 'recharts'
 import { 
   Ticket, 
   Clock, 
@@ -44,30 +32,45 @@ interface KPIDashboardProps {
   metrics: KPIMetrics
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+// Paleta de colores profesional
+const COLORS = {
+  primary: '#3b82f6',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  secondary: '#8b5cf6',
+  info: '#06b6d4',
+  neutral: '#6b7280'
+}
 
 export function KPIDashboard({ metrics }: KPIDashboardProps) {
-  const categoryData = Object.entries(metrics.ticketsByCategory).map(([key, value]) => ({
-    name: CATEGORY_LABELS[key as keyof typeof CATEGORY_LABELS] || key,
-    value
-  }))
+  const categoryData = Object.entries(metrics.ticketsByCategory)
+    .map(([key, value]) => ({
+      name: CATEGORY_LABELS[key as keyof typeof CATEGORY_LABELS] || key,
+      value
+    }))
+    .filter(item => item.value > 0)
 
-  const priorityData = Object.entries(metrics.ticketsByPriority).map(([key, value]) => ({
-    name: PRIORITY_LABELS[key as keyof typeof PRIORITY_LABELS] || key,
-    value
-  }))
+  const priorityData = Object.entries(metrics.ticketsByPriority)
+    .map(([key, value]) => ({
+      name: PRIORITY_LABELS[key as keyof typeof PRIORITY_LABELS] || key,
+      value
+    }))
+    .filter(item => item.value > 0)
 
-  const levelData = Object.entries(metrics.ticketsByLevel).map(([key, value]) => ({
-    name: `Nivel ${key}`,
-    value
-  }))
+  const levelData = Object.entries(metrics.ticketsByLevel)
+    .map(([key, value]) => ({
+      name: `Nivel ${key}`,
+      value: value || 0
+    }))
+    .sort((a, b) => parseInt(a.name.split(' ')[1]) - parseInt(b.name.split(' ')[1]))
 
   const statusData = [
-    { name: 'Abiertos', value: metrics.openTickets, color: '#3b82f6' },
-    { name: 'En Progreso', value: metrics.inProgressTickets, color: '#f59e0b' },
-    { name: 'Resueltos', value: metrics.resolvedTickets, color: '#10b981' },
-    { name: 'Cerrados', value: metrics.closedTickets, color: '#6b7280' }
-  ]
+    { name: 'Abiertos', value: metrics.openTickets, color: COLORS.primary },
+    { name: 'En Progreso', value: metrics.inProgressTickets, color: COLORS.warning },
+    { name: 'Resueltos', value: metrics.resolvedTickets, color: COLORS.success },
+    { name: 'Cerrados', value: metrics.closedTickets, color: COLORS.neutral }
+  ].filter(item => item.value > 0)
 
   return (
     <div className="space-y-6">
@@ -130,131 +133,208 @@ export function KPIDashboard({ metrics }: KPIDashboardProps) {
 
       {/* Charts Row */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Status Distribution */}
+        {/* Status Distribution - Donut Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Distribución por Estado</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {statusData.length > 0 ? (
+              <Chart
+                options={{
+                  chart: {
+                    fontFamily: 'inherit',
+                    toolbar: { show: false },
+                  },
+                  labels: statusData.map(d => d.name),
+                  colors: statusData.map(d => d.color),
+                  plotOptions: {
+                    pie: {
+                      donut: {
+                        size: '65%',
+                        labels: {
+                          show: true,
+                          total: {
+                            show: true,
+                            fontSize: '14px',
+                            color: 'hsl(var(--muted-foreground))',
+                            label: 'Total'
+                          }
+                        }
+                      }
+                    }
+                  },
+                  legend: {
+                    position: 'bottom' as const,
+                    fontSize: 13,
+                    fontFamily: 'inherit'
+                  }
+                }}
+                series={statusData.map(d => d.value)}
+                type="donut"
+                height={320}
+              />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <p>Sin datos disponibles</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Category Distribution */}
+        {/* Category Distribution - Bar Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Tickets por Categoría</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12 }}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {categoryData.length > 0 ? (
+              <Chart
+                options={{
+                  chart: {
+                    fontFamily: 'inherit',
+                    toolbar: { show: false },
+                    type: 'bar'
+                  },
+                  xaxis: {
+                    categories: categoryData.map(d => d.name),
+                    labels: {
+                      style: {
+                        colors: 'hsl(var(--muted-foreground))',
+                        fontSize: '12px'
+                      }
+                    }
+                  },
+                  yaxis: {
+                    title: { text: 'Cantidad' },
+                    labels: {
+                      style: {
+                        colors: 'hsl(var(--muted-foreground))',
+                        fontSize: '12px'
+                      }
+                    }
+                  },
+                  plotOptions: {
+                    bar: {
+                      horizontal: false,
+                      columnWidth: '65%',
+                      borderRadius: 8
+                    }
+                  },
+                  colors: [COLORS.primary],
+                  dataLabels: { enabled: false },
+                  legend: { position: 'bottom' as const, fontSize: 13, fontFamily: 'inherit' }
+                }}
+                series={[
+                  {
+                    name: 'Tickets',
+                    data: categoryData.map(d => d.value)
+                  }
+                ]}
+                type="bar"
+                height={320}
+              />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <p>Sin datos disponibles</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Second Charts Row */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Priority Distribution */}
+        {/* Priority Distribution - Pie Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Tickets por Prioridad</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={priorityData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {priorityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {priorityData.length > 0 ? (
+              <Chart
+                options={{
+                  chart: {
+                    fontFamily: 'inherit',
+                    toolbar: { show: false },
+                  },
+                  labels: priorityData.map(d => d.name),
+                  colors: [COLORS.neutral, COLORS.warning, COLORS.danger, '#dc2626'],
+                  legend: {
+                    position: 'bottom' as const,
+                    fontSize: 13,
+                    fontFamily: 'inherit'
+                  },
+                  dataLabels: { enabled: false }
+                }}
+                series={priorityData.map(d => d.value)}
+                type="pie"
+                height={320}
+              />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                <p>Sin datos disponibles</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Level Distribution */}
+        {/* Level Distribution - Horizontal Bar Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Tickets por Nivel de Soporte</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={levelData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" tick={{ fontSize: 12 }} />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    tick={{ fontSize: 12 }}
-                    width={70}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {levelData.some(d => d.value > 0) ? (
+              <Chart
+                options={{
+                  chart: {
+                    fontFamily: 'inherit',
+                    toolbar: { show: false },
+                    type: 'bar'
+                  },
+                  xaxis: {
+                    categories: levelData.map(d => d.name),
+                    labels: {
+                      style: {
+                        colors: 'hsl(var(--muted-foreground))',
+                        fontSize: '12px'
+                      }
+                    }
+                  },
+                  yaxis: {
+                    labels: {
+                      style: {
+                        colors: 'hsl(var(--muted-foreground))',
+                        fontSize: '12px'
+                      }
+                    }
+                  },
+                  plotOptions: {
+                    bar: {
+                      horizontal: true,
+                      columnWidth: '65%',
+                      borderRadius: 8
+                    }
+                  },
+                  colors: [COLORS.success],
+                  dataLabels: { enabled: false },
+                  legend: { position: 'bottom' as const, fontSize: 13, fontFamily: 'inherit' }
+                }}
+                series={[
+                  {
+                    name: 'Tickets',
+                    data: levelData.map(d => d.value)
+                  }
+                ]}
+                type="bar"
+                height={250}
+              />
+            ) : (
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                <p>Sin datos disponibles</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

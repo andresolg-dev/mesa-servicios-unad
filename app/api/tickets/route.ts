@@ -15,7 +15,11 @@ async function getSession() {
   const cookieStore = await cookies()
   const session = cookieStore.get('session')
   if (!session) return null
-  return JSON.parse(session.value)
+  try {
+    return JSON.parse(session.value)
+  } catch {
+    return null
+  }
 }
 
 // GET all tickets
@@ -117,7 +121,6 @@ export async function POST(request: NextRequest) {
 
     await ticket.save()
 
-    // Send confirmation email (non-blocking)
     sendTicketCreated({
       ticketNumber,
       title,
@@ -126,7 +129,7 @@ export async function POST(request: NextRequest) {
       status: 'abierto',
       createdByName: user.displayName,
       createdByEmail: user.email,
-    })
+    }).catch((err: unknown) => console.error('Email error (ticketCreated):', err))
 
     return NextResponse.json({
       message: 'Ticket creado exitosamente',

@@ -76,16 +76,16 @@ export function TicketCard({ ticket }: TicketCardProps) {
   return (
     <Link href={`/tickets/${ticket._id}`}>
       <Card className={cn(
-        "transition-all hover:shadow-md hover:border-primary/50 cursor-pointer h-full",
+        "transition-all hover:shadow-md hover:border-primary/50 cursor-pointer h-full overflow-hidden",
         isOverdue && "border-destructive/50"
       )}>
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground font-mono">{ticket.ticketNumber}</p>
-              <h3 className="font-semibold text-foreground truncate mt-1">{ticket.title}</h3>
+        <CardHeader className="pb-2 overflow-hidden">
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <p className="text-xs text-muted-foreground font-mono truncate">{ticket.ticketNumber}</p>
+              <h3 className="font-semibold text-foreground line-clamp-2 mt-1">{ticket.title}</h3>
             </div>
-            <Badge variant="outline" className={cn("shrink-0", priorityColors[ticket.priority])}>
+            <Badge variant="outline" className={cn("shrink-0 whitespace-nowrap", priorityColors[ticket.priority])}>
               {PRIORITY_LABELS[ticket.priority]}
             </Badge>
           </div>

@@ -33,7 +33,7 @@ export interface Ticket {
   createdByEmail: string
   assignedTo?: string
   assignedToEmail?: string
-  assignedLevel?: number
+  assignedLevel?: 'tecnico_n1' | 'tecnico_n2' | 'tecnico_n3'
   createdAt: Date
   updatedAt: Date
   resolvedAt?: Date
