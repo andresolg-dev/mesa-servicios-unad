@@ -118,6 +118,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<UserData[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
+  const [userSearch, setUserSearch] = useState('')
 
   useEffect(() => {
     if (!authLoading && user && user.role !== 'admin') {
@@ -234,11 +235,19 @@ export default function AdminPage() {
 
       {/* Users table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Gestión de Usuarios</CardTitle>
-          <CardDescription>
-            Haz clic en el departamento para editarlo. El ícono de lápiz aparece al pasar el cursor.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Gestión de Usuarios</CardTitle>
+            <CardDescription>
+              Haz clic en el departamento para editarlo. El ícono de lápiz aparece al pasar el cursor.
+            </CardDescription>
+          </div>
+          <Input
+            placeholder="Buscar por nombre, email..."
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            className="w-56 h-8 text-sm"
+          />
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -254,7 +263,13 @@ export default function AdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((u) => (
+                {users.filter(u => {
+                  if (!userSearch) return true
+                  const q = userSearch.toLowerCase()
+                  return u.displayName.toLowerCase().includes(q) ||
+                    u.email.toLowerCase().includes(q) ||
+                    (u.department || '').toLowerCase().includes(q)
+                }).map((u) => (
                   <TableRow key={u._id}>
                     <TableCell className="font-medium">{u.displayName}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{u.email}</TableCell>

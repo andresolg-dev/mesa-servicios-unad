@@ -112,6 +112,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activityTab, setActivityTab] = useState<'today' | 'yesterday' | 'week'>('today')
+  const [slaSearch, setSlaSearch] = useState('')
 
   const isTechnician = user?.role?.startsWith('tecnico') || user?.role === 'admin'
 
@@ -389,6 +390,8 @@ export default function DashboardPage() {
                 <input
                   type="text"
                   placeholder="Buscar ticket"
+                  value={slaSearch}
+                  onChange={(e) => setSlaSearch(e.target.value)}
                   className="h-8 pl-3 pr-8 text-xs border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-ring w-40"
                 />
               </div>
@@ -421,7 +424,11 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentTickets.slice(0, 5).map((t) => (
+                  {recentTickets.filter(t => {
+                    if (!slaSearch) return true
+                    const q = slaSearch.toLowerCase()
+                    return t.ticketNumber.toLowerCase().includes(q) || t.title.toLowerCase().includes(q)
+                  }).slice(0, 5).map((t) => (
                     <tr key={t._id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                       <td className="py-3 px-4">
                         <input type="checkbox" className="rounded" />
