@@ -83,10 +83,10 @@ export async function GET() {
       { $group: { _id: '$assignedLevel', count: { $sum: 1 } } },
     ])
 
-    // Get ticket type distribution
+    // Get ticket type distribution (tickets without ticketType default to 'incidente')
     const typeStats = await Ticket.aggregate([
       { $match: baseQuery },
-      { $group: { _id: '$ticketType', count: { $sum: 1 } } },
+      { $group: { _id: { $ifNull: ['$ticketType', 'incidente'] }, count: { $sum: 1 } } },
     ])
 
     // Get satisfaction average
