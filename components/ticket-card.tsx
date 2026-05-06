@@ -111,7 +111,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-1">
               <User className="h-3 w-3" />
-              <span className="truncate max-w-[120px]">{ticket.createdByName || ticket.createdByEmail}</span>
+              <span className="truncate max-w-[120px]">{ticket.createdByName || 'Usuario'}</span>
             </div>
             <div className="flex items-center gap-1">
               {isOverdue && <AlertCircle className="h-3 w-3 text-destructive" />}
