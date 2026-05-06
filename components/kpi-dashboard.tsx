@@ -166,7 +166,7 @@ export function KPIDashboard({ metrics }: KPIDashboardProps) {
                   },
                   legend: {
                     position: 'bottom' as const,
-                    fontSize: 13,
+                    fontSize: '13px',
                     fontFamily: 'inherit'
                   }
                 }}
@@ -223,7 +223,7 @@ export function KPIDashboard({ metrics }: KPIDashboardProps) {
                   },
                   colors: [COLORS.primary],
                   dataLabels: { enabled: false },
-                  legend: { position: 'bottom' as const, fontSize: 13, fontFamily: 'inherit' }
+                  legend: { position: 'bottom' as const, fontSize: '13px', fontFamily: 'inherit' }
                 }}
                 series={[
                   {
@@ -262,7 +262,7 @@ export function KPIDashboard({ metrics }: KPIDashboardProps) {
                   colors: [COLORS.neutral, COLORS.warning, COLORS.danger, '#dc2626'],
                   legend: {
                     position: 'bottom' as const,
-                    fontSize: 13,
+                    fontSize: '13px',
                     fontFamily: 'inherit'
                   },
                   dataLabels: { enabled: false }
@@ -319,7 +319,7 @@ export function KPIDashboard({ metrics }: KPIDashboardProps) {
                   },
                   colors: [COLORS.success],
                   dataLabels: { enabled: false },
-                  legend: { position: 'bottom' as const, fontSize: 13, fontFamily: 'inherit' }
+                  legend: { position: 'bottom' as const, fontSize: '13px', fontFamily: 'inherit' }
                 }}
                 series={[
                   {
