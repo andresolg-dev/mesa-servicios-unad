@@ -424,7 +424,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentTickets.filter(t => {
+                  {allRecentTickets.filter(t => {
                     if (!slaSearch) return true
                     const q = slaSearch.toLowerCase()
                     return t.ticketNumber.toLowerCase().includes(q) || t.title.toLowerCase().includes(q)
