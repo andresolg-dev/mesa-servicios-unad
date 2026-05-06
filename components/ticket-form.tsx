@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, AlertCircle, Send } from 'lucide-react'
-import type { TicketCategory, TicketPriority } from '@/lib/types'
-import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/lib/types'
+import type { TicketCategory, TicketPriority, TicketType } from '@/lib/types'
+import { CATEGORY_LABELS, PRIORITY_LABELS, TYPE_LABELS } from '@/lib/types'
 
 export function TicketForm() {
   const { user } = useAuth()
@@ -30,6 +30,7 @@ export function TicketForm() {
     title: '',
     description: '',
     category: '' as TicketCategory,
+    ticketType: 'incidente' as TicketType,
     priority: 'media' as TicketPriority
   })
 
@@ -48,6 +49,7 @@ export function TicketForm() {
           title: formData.title,
           description: formData.description,
           category: formData.category,
+          ticketType: formData.ticketType,
           priority: formData.priority
         })
       })
@@ -105,6 +107,23 @@ export function TicketForm() {
               rows={5}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ticketType">Tipo de Ticket</Label>
+            <Select
+              value={formData.ticketType}
+              onValueChange={(value) => setFormData({ ...formData, ticketType: value as TicketType })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccione el tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

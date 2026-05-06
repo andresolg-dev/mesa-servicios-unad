@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const { title, description, category, priority } = await request.json()
+    const { title, description, category, ticketType, priority } = await request.json()
 
     if (!title || !description || !category || !priority) {
       return NextResponse.json(
@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       category,
+      ticketType: ticketType || 'incidente',
       priority,
       status: 'abierto',
       createdBy: user.id,

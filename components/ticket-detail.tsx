@@ -28,8 +28,15 @@ import {
   Star
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { CATEGORY_LABELS, STATUS_LABELS, PRIORITY_LABELS, ROLE_LABELS } from '@/lib/types'
-import type { TicketStatus, TicketPriority, TicketCategory, UserRole } from '@/lib/types'
+import { CATEGORY_LABELS, STATUS_LABELS, PRIORITY_LABELS, ROLE_LABELS, TYPE_LABELS } from '@/lib/types'
+import type { TicketStatus, TicketPriority, TicketCategory, TicketType, UserRole } from '@/lib/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface TicketData {
   _id: string
@@ -37,6 +44,7 @@ interface TicketData {
   title: string
   description: string
   category: TicketCategory
+  ticketType: TicketType
   priority: TicketPriority
   status: TicketStatus
   createdBy: string
@@ -213,9 +221,30 @@ export function TicketDetail({ ticket, onUpdate }: TicketDetailProps) {
           
           <Separator className="my-4" />
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 text-sm">
             <div>
-              <p className="text-muted-foreground">Categoria</p>
+              <p className="text-muted-foreground mb-1">Tipo de Ticket</p>
+              {isTechnician ? (
+                <Select
+                  value={ticket.ticketType || 'incidente'}
+                  onValueChange={(value) => updateTicket('updateType', { ticketType: value })}
+                  disabled={loading}
+                >
+                  <SelectTrigger className="h-7 text-sm w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="font-medium">{TYPE_LABELS[ticket.ticketType] || 'Incidente'}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-muted-foreground">Categoría</p>
               <p className="font-medium">{CATEGORY_LABELS[ticket.category]}</p>
             </div>
             <div>

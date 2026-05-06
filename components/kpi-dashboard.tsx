@@ -11,7 +11,7 @@ import {
   Star,
   Target
 } from 'lucide-react'
-import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/lib/types'
+import { CATEGORY_LABELS, PRIORITY_LABELS, TYPE_LABELS } from '@/lib/types'
 
 interface KPIMetrics {
   totalTickets: number
@@ -26,6 +26,7 @@ interface KPIMetrics {
   ticketsByCategory: Record<string, number>
   ticketsByPriority: Record<string, number>
   ticketsByLevel: Record<number, number>
+  ticketsByType: Record<string, number>
 }
 
 interface KPIDashboardProps {
@@ -64,6 +65,13 @@ export function KPIDashboard({ metrics }: KPIDashboardProps) {
       value: value || 0
     }))
     .sort((a, b) => parseInt(a.name.split(' ')[1]) - parseInt(b.name.split(' ')[1]))
+
+  const typeData = Object.entries(metrics.ticketsByType || {})
+    .map(([key, value]) => ({
+      name: TYPE_LABELS[key as keyof typeof TYPE_LABELS] || key,
+      value
+    }))
+    .filter(item => item.value > 0)
 
   const statusData = [
     { name: 'Abiertos', value: metrics.openTickets, color: COLORS.primary },
@@ -338,6 +346,43 @@ export function KPIDashboard({ metrics }: KPIDashboardProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Ticket Type Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tickets por Tipo (Incidente / Solicitud / Problema)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {typeData.length > 0 ? (
+            <Chart
+              options={{
+                chart: {
+                  fontFamily: 'inherit',
+                  toolbar: { show: false },
+                },
+                labels: typeData.map(d => d.name),
+                colors: [COLORS.danger, COLORS.primary, COLORS.warning],
+                legend: {
+                  position: 'bottom' as const,
+                  fontSize: '13px',
+                  fontFamily: 'inherit'
+                },
+                dataLabels: {
+                  enabled: true,
+                  formatter: (val: number) => `${val.toFixed(1)}%`
+                }
+              }}
+              series={typeData.map(d => d.value)}
+              type="pie"
+              height={300}
+            />
+          ) : (
+            <div className="h-72 flex items-center justify-center text-muted-foreground">
+              <p>Sin datos disponibles</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* SLA Table */}
       <Card>

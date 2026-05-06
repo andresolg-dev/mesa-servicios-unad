@@ -83,6 +83,12 @@ export async function GET() {
       { $group: { _id: '$assignedLevel', count: { $sum: 1 } } },
     ])
 
+    // Get ticket type distribution
+    const typeStats = await Ticket.aggregate([
+      { $match: baseQuery },
+      { $group: { _id: '$ticketType', count: { $sum: 1 } } },
+    ])
+
     // Get satisfaction average
     const satisfactionStats = await Ticket.aggregate([
       { $match: { ...baseQuery, 'satisfactionSurvey.rating': { $exists: true } } },
@@ -139,6 +145,10 @@ export async function GET() {
           if (num) acc[num] = count
           return acc
         }, {} as Record<number, number>),
+        typeDistribution: typeStats.reduce((acc, { _id, count }) => {
+          if (_id) acc[_id] = count
+          return acc
+        }, {} as Record<string, number>),
         recentTickets,
         weeklyTrend,
       },

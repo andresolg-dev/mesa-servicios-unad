@@ -248,6 +248,16 @@ export async function PATCH(
         ticket.status = data.status
         break
 
+      case 'updateType':
+        if (user.role === 'cliente') {
+          return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+        }
+        if (!['incidente', 'solicitud', 'problema'].includes(data.ticketType)) {
+          return NextResponse.json({ error: 'Tipo de ticket inválido' }, { status: 400 })
+        }
+        ticket.ticketType = data.ticketType
+        break
+
       default:
         // Direct field updates (for admin)
         if (user.role === 'admin') {

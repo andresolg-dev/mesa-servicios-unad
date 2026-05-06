@@ -373,6 +373,48 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
+      {/* Ticket type definitions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Definición de Tipos de Ticket</CardTitle>
+          <CardDescription>Clasificación ITIL de los tickets según su naturaleza</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Definición</TableHead>
+                  <TableHead>Ejemplos</TableHead>
+                  <TableHead>Prioridad típica</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell><Badge variant="destructive">Incidente</Badge></TableCell>
+                  <TableCell>Interrupción no planificada o degradación de un servicio de TI</TableCell>
+                  <TableCell>Caída de internet, aplicativo inaccesible, equipo que no enciende</TableCell>
+                  <TableCell>Alta / Crítica</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell><Badge className="bg-blue-600 text-white">Solicitud</Badge></TableCell>
+                  <TableCell>Petición de un usuario para obtener información, acceso o un servicio estándar</TableCell>
+                  <TableCell>Creación de usuario, instalación de software, reset de contraseña</TableCell>
+                  <TableCell>Baja / Media</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell><Badge className="bg-amber-600 text-white">Problema</Badge></TableCell>
+                  <TableCell>Causa raíz desconocida de uno o más incidentes recurrentes</TableCell>
+                  <TableCell>Fallas intermitentes de red sin causa identificada, crashes repetidos de ERP</TableCell>
+                  <TableCell>Media / Alta</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Assignment rules */}
       <Card>
         <CardHeader>

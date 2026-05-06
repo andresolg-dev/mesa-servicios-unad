@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose'
 export type TicketCategory = 'aplicacion' | 'conectividad' | 'equipo' | 'usuarios' | 'contrasenas'
 export type TicketPriority = 'critica' | 'alta' | 'media' | 'baja'
 export type TicketStatus = 'abierto' | 'en_progreso' | 'pendiente' | 'escalado' | 'resuelto' | 'cerrado'
+export type TicketType = 'incidente' | 'solicitud' | 'problema'
 export type TechnicianLevel = 'tecnico_n1' | 'tecnico_n2' | 'tecnico_n3'
 
 export interface IComment {
@@ -35,6 +36,7 @@ export interface ITicket extends Document {
   title: string
   description: string
   category: TicketCategory
+  ticketType: TicketType
   priority: TicketPriority
   status: TicketStatus
   createdBy: mongoose.Types.ObjectId
@@ -97,6 +99,12 @@ const TicketSchema = new Schema<ITicket>(
       type: String,
       enum: ['aplicacion', 'conectividad', 'equipo', 'usuarios', 'contrasenas'],
       required: true,
+    },
+    ticketType: {
+      type: String,
+      enum: ['incidente', 'solicitud', 'problema'],
+      required: true,
+      default: 'incidente',
     },
     priority: {
       type: String,

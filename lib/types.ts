@@ -4,11 +4,13 @@ export type TicketStatus = 'abierto' | 'en_progreso' | 'pendiente' | 'escalado' 
 
 export type TicketPriority = 'baja' | 'media' | 'alta' | 'critica'
 
-export type TicketCategory = 
-  | 'aplicacion' 
-  | 'conectividad' 
-  | 'equipo' 
-  | 'usuarios' 
+export type TicketType = 'incidente' | 'solicitud' | 'problema'
+
+export type TicketCategory =
+  | 'aplicacion'
+  | 'conectividad'
+  | 'equipo'
+  | 'usuarios'
   | 'contrasenas'
 
 export interface User {
@@ -27,6 +29,7 @@ export interface Ticket {
   title: string
   description: string
   category: TicketCategory
+  ticketType: TicketType
   status: TicketStatus
   priority: TicketPriority
   createdBy: string
@@ -87,6 +90,12 @@ export interface KPIMetrics {
   ticketsByCategory: Record<TicketCategory, number>
   ticketsByPriority: Record<TicketPriority, number>
   ticketsByLevel: Record<number, number>
+}
+
+export const TYPE_LABELS: Record<TicketType, string> = {
+  incidente: 'Incidente',
+  solicitud: 'Solicitud',
+  problema: 'Problema',
 }
 
 export const CATEGORY_LABELS: Record<TicketCategory, string> = {

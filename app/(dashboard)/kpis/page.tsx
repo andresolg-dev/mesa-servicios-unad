@@ -20,6 +20,7 @@ interface StatsData {
   satisfactionAverage: number
   satisfactionCount: number
   levelDistribution: Record<number, number>
+  typeDistribution: Record<string, number>
 }
 
 export default function KPIsPage() {
@@ -83,6 +84,7 @@ export default function KPIsPage() {
     ticketsByCategory: stats.categoryDistribution,
     ticketsByPriority: stats.priorityDistribution,
     ticketsByLevel: stats.levelDistribution,
+    ticketsByType: stats.typeDistribution || {},
   }
 
   return (
