@@ -65,9 +65,19 @@ function categoryLabel(c: string) {
 }
 
 async function send(to: string, subject: string, html: string) {
-  if (!process.env.RESEND_API_KEY) return
+  if (!process.env.RESEND_API_KEY) {
+    console.error('Resend API key no está configurada en RESEND_API_KEY')
+    return
+  }
+
+  const testTo = process.env.RESEND_TEST_TO
+  const destination = testTo || to
+  if (testTo && testTo !== to) {
+    console.log(`Resend debug: enviando correo de prueba a ${testTo} en lugar de ${to}`)
+  }
+
   try {
-    await resend.emails.send({ from: FROM, to, subject, html })
+    await resend.emails.send({ from: FROM, to: destination, subject, html })
   } catch (err) {
     console.error('Email send error:', err)
   }
