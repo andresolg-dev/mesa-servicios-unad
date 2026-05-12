@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { KPIDashboard } from '@/components/kpi-dashboard'
 import { Loader2 } from 'lucide-react'
+import type { SurveyRecord } from '@/lib/types'
 
 interface StatsData {
   total: number
@@ -27,7 +28,10 @@ export default function KPIsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<StatsData | null>(null)
+  const [surveys, setSurveys] = useState<SurveyRecord[]>([])
   const [loading, setLoading] = useState(true)
+
+  const canView = user && user.role !== 'cliente'
 
   useEffect(() => {
     if (!authLoading && user && user.role === 'cliente') {
@@ -36,22 +40,27 @@ export default function KPIsPage() {
   }, [user, authLoading, router])
 
   useEffect(() => {
-    if (!user || user.role === 'cliente') return
+    if (!canView) return
 
-    const fetchStats = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await fetch('/api/tickets/stats')
-        const data = await res.json()
-        if (data.stats) setStats(data.stats)
+        const [statsRes, surveysRes] = await Promise.all([
+          fetch('/api/tickets/stats'),
+          fetch('/api/surveys'),
+        ])
+        const statsData = await statsRes.json()
+        const surveysData = await surveysRes.json()
+        if (statsData.stats) setStats(statsData.stats)
+        if (surveysData.surveys) setSurveys(surveysData.surveys)
       } catch (err) {
-        console.error('Error fetching stats:', err)
+        console.error('Error fetching KPI data:', err)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStats()
-  }, [user])
+    fetchAll()
+  }, [canView])
 
   if (authLoading || user?.role === 'cliente') return null
 
@@ -81,6 +90,7 @@ export default function KPIsPage() {
     averageResolutionTime: 0,
     slaComplianceRate: stats.slaPercentage,
     customerSatisfactionScore: stats.satisfactionAverage,
+    satisfactionCount: stats.satisfactionCount,
     ticketsByCategory: stats.categoryDistribution,
     ticketsByPriority: stats.priorityDistribution,
     ticketsByLevel: stats.levelDistribution,
@@ -95,7 +105,7 @@ export default function KPIsPage() {
           Indicadores clave de rendimiento de la Mesa de Servicios
         </p>
       </div>
-      <KPIDashboard metrics={metrics} />
+      <KPIDashboard metrics={metrics} surveys={surveys} />
     </div>
   )
 }

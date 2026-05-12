@@ -22,7 +22,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Users, Settings, Shield, Loader2, Pencil, Check, X } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Users, Settings, Shield, Loader2, Pencil, Check, X, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROLE_LABELS } from '@/lib/types'
 import type { UserRole } from '@/lib/types'
@@ -37,7 +45,6 @@ interface UserData {
   createdAt: string
 }
 
-// Inline editable cell for department
 function DepartmentCell({
   value,
   disabled,
@@ -64,9 +71,7 @@ function DepartmentCell({
 
   const save = async () => {
     setEditing(false)
-    if (draft.trim() !== value) {
-      await onSave(draft.trim())
-    }
+    if (draft.trim() !== value) await onSave(draft.trim())
   }
 
   const handleKey = (e: React.KeyboardEvent) => {
@@ -112,6 +117,8 @@ function DepartmentCell({
   )
 }
 
+const EMPTY_FORM = { displayName: '', email: '', password: '', role: 'cliente' as UserRole, department: '', phone: '' }
+
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -119,15 +126,23 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
   const [userSearch, setUserSearch] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
+
+  const isAdmin = user?.role === 'admin'
+  const isAuditor = user?.role === 'auditor'
+  const canAccess = isAdmin || isAuditor
 
   useEffect(() => {
-    if (!authLoading && user && user.role !== 'admin') {
+    if (!authLoading && user && !canAccess) {
       router.replace('/dashboard')
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, canAccess])
 
   useEffect(() => {
-    if (user?.role !== 'admin') return
+    if (!canAccess) return
     const fetchUsers = async () => {
       try {
         const res = await fetch('/api/users')
@@ -140,7 +155,7 @@ export default function AdminPage() {
       }
     }
     fetchUsers()
-  }, [user])
+  }, [canAccess])
 
   const patchUser = async (userId: string, body: Record<string, unknown>) => {
     setUpdating(userId)
@@ -169,7 +184,35 @@ export default function AdminPage() {
   const handleToggleActive = (userId: string, isActive: boolean) =>
     patchUser(userId, { isActive })
 
-  if (authLoading || user?.role !== 'admin') return null
+  const handleCreate = async () => {
+    setCreateError('')
+    if (!form.displayName || !form.email || !form.password) {
+      setCreateError('Nombre, email y contraseña son requeridos')
+      return
+    }
+    setCreating(true)
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCreateError(data.error || 'Error al crear usuario')
+        return
+      }
+      setUsers(prev => [data.user, ...prev])
+      setCreateOpen(false)
+      setForm(EMPTY_FORM)
+    } catch {
+      setCreateError('Error de conexión')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  if (authLoading || !canAccess) return null
 
   if (loading) {
     return (
@@ -183,14 +226,24 @@ export default function AdminPage() {
     total: users.length,
     clients: users.filter(u => u.role === 'cliente').length,
     technicians: users.filter(u => u.role?.startsWith('tecnico')).length,
-    admins: users.filter(u => u.role === 'admin').length,
+    admins: users.filter(u => u.role === 'admin' || u.role === 'auditor').length,
   }
+
+  const filteredUsers = users.filter(u => {
+    if (!userSearch) return true
+    const q = userSearch.toLowerCase()
+    return u.displayName.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.department || '').toLowerCase().includes(q)
+  })
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Administración</h1>
-        <p className="text-muted-foreground">Gestión de usuarios y configuración del sistema</p>
+        <h1 className="text-3xl font-bold tracking-tight">Usuarios & Roles</h1>
+        <p className="text-muted-foreground">
+          {isAuditor ? 'Vista de solo lectura' : 'Gestión de usuarios del sistema'}
+        </p>
       </div>
 
       {/* Stats */}
@@ -224,7 +277,7 @@ export default function AdminPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Administradores</CardTitle>
+            <CardTitle className="text-sm font-medium">Admin / Auditores</CardTitle>
             <Shield className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -239,15 +292,25 @@ export default function AdminPage() {
           <div>
             <CardTitle>Gestión de Usuarios</CardTitle>
             <CardDescription>
-              Haz clic en el departamento para editarlo. El ícono de lápiz aparece al pasar el cursor.
+              {isAuditor
+                ? 'Listado de todos los usuarios del sistema (solo lectura)'
+                : 'Haz clic en el departamento para editarlo. El ícono de lápiz aparece al pasar el cursor.'}
             </CardDescription>
           </div>
-          <Input
-            placeholder="Buscar por nombre, email..."
-            value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
-            className="w-56 h-8 text-sm"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Buscar por nombre, email..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              className="w-56 h-8 text-sm"
+            />
+            {isAdmin && (
+              <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setCreateError(''); setCreateOpen(true) }}>
+                <UserPlus className="h-4 w-4 mr-1.5" />
+                Nuevo usuario
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -259,64 +322,64 @@ export default function AdminPage() {
                   <TableHead>Departamento</TableHead>
                   <TableHead>Rol</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Acciones</TableHead>
+                  {isAdmin && <TableHead>Acciones</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.filter(u => {
-                  if (!userSearch) return true
-                  const q = userSearch.toLowerCase()
-                  return u.displayName.toLowerCase().includes(q) ||
-                    u.email.toLowerCase().includes(q) ||
-                    (u.department || '').toLowerCase().includes(q)
-                }).map((u) => (
+                {filteredUsers.map((u) => (
                   <TableRow key={u._id}>
                     <TableCell className="font-medium">{u.displayName}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{u.email}</TableCell>
                     <TableCell>
-                      <DepartmentCell
-                        value={u.department || ''}
-                        disabled={updating === u._id || u._id === user?.id}
-                        onSave={(dept) => handleDepartmentChange(u._id, dept)}
-                      />
+                      {isAuditor ? (
+                        <span className="text-sm">{u.department || <span className="text-muted-foreground italic">Sin depto.</span>}</span>
+                      ) : (
+                        <DepartmentCell
+                          value={u.department || ''}
+                          disabled={updating === u._id || u._id === user?.id}
+                          onSave={(dept) => handleDepartmentChange(u._id, dept)}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={u.role}
-                        onValueChange={(value) => handleRoleChange(u._id, value as UserRole)}
-                        disabled={updating === u._id || u._id === user?.id}
-                      >
-                        <SelectTrigger className="w-[170px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {isAuditor ? (
+                        <Badge variant="outline">{ROLE_LABELS[u.role] || u.role}</Badge>
+                      ) : (
+                        <Select
+                          value={u.role}
+                          onValueChange={(value) => handleRoleChange(u._id, value as UserRole)}
+                          disabled={updating === u._id || u._id === user?.id}
+                        >
+                          <SelectTrigger className="w-[170px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={u.isActive ? 'default' : 'secondary'}>
                         {u.isActive ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleActive(u._id, !u.isActive)}
-                        disabled={updating === u._id || u._id === user?.id}
-                      >
-                        {updating === u._id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : u.isActive ? (
-                          'Desactivar'
-                        ) : (
-                          'Activar'
-                        )}
-                      </Button>
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleActive(u._id, !u.isActive)}
+                          disabled={updating === u._id || u._id === user?.id}
+                        >
+                          {updating === u._id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : u.isActive ? 'Desactivar' : 'Activar'}
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -462,6 +525,94 @@ export default function AdminPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Create user dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Crear nuevo usuario</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="cu-name">Nombre completo *</Label>
+              <Input
+                id="cu-name"
+                value={form.displayName}
+                onChange={(e) => setForm(f => ({ ...f, displayName: e.target.value }))}
+                placeholder="Ej: Juan García"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cu-email">
+                Email / Usuario *
+                {form.role === 'auditor' && (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">(puede ser solo nombre, ej: auditor)</span>
+                )}
+              </Label>
+              <Input
+                id="cu-email"
+                type="text"
+                value={form.email}
+                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                placeholder={form.role === 'auditor' ? 'Ej: auditor' : 'usuario@ejemplo.com'}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cu-password">Contraseña *</Label>
+              <Input
+                id="cu-password"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cu-role">Rol</Label>
+              <Select value={form.role} onValueChange={(v) => setForm(f => ({ ...f, role: v as UserRole }))}>
+                <SelectTrigger id="cu-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cu-dept">Departamento</Label>
+              <Input
+                id="cu-dept"
+                value={form.department}
+                onChange={(e) => setForm(f => ({ ...f, department: e.target.value }))}
+                placeholder="Ej: TI, Finanzas..."
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cu-phone">Teléfono</Label>
+              <Input
+                id="cu-phone"
+                value={form.phone}
+                onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="Ej: +57 300 000 0000"
+              />
+            </div>
+            {createError && (
+              <p className="text-sm text-destructive">{createError}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreate} disabled={creating}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Crear usuario
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

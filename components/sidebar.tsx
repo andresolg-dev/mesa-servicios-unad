@@ -110,7 +110,8 @@ export function Sidebar() {
   const pathname = usePathname()
 
   const isAdmin = user?.role === 'admin'
-  const isTechnician = user?.role?.startsWith('tecnico') || isAdmin
+  const isAuditor = user?.role === 'auditor'
+  const isTechnician = user?.role?.startsWith('tecnico') || isAdmin || isAuditor
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 w-60 bg-card border-r border-border flex flex-col">
@@ -149,8 +150,8 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Gestión — solo admin */}
-        {isAdmin && (
+        {/* Gestión — admin y auditor */}
+        {(isAdmin || isAuditor) && (
           <div>
             <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
               Gestión

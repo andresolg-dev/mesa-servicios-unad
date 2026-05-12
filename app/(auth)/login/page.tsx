@@ -129,7 +129,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="space-y-1">
             <h2 className="text-2xl font-bold tracking-tight">Iniciar sesión</h2>
-            <p className="text-muted-foreground text-sm">Ingresa con tu correo institucional</p>
+            <p className="text-muted-foreground text-sm">Ingresa con tu correo o nombre de usuario</p>
           </div>
 
           {/* Form */}
@@ -142,14 +142,14 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="email">Correo electrónico o usuario</Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 placeholder="usuario@empresa.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
+                autoComplete="username"
                 required
               />
             </div>

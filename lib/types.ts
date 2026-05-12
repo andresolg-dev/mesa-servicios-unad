@@ -1,4 +1,4 @@
-export type UserRole = 'cliente' | 'tecnico_n1' | 'tecnico_n2' | 'tecnico_n3' | 'admin'
+export type UserRole = 'cliente' | 'tecnico_n1' | 'tecnico_n2' | 'tecnico_n3' | 'admin' | 'auditor'
 
 export type TicketStatus = 'abierto' | 'en_progreso' | 'pendiente' | 'escalado' | 'resuelto' | 'cerrado'
 
@@ -127,7 +127,24 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   tecnico_n1: 'Técnico Nivel 1',
   tecnico_n2: 'Técnico Nivel 2',
   tecnico_n3: 'Técnico Nivel 3',
-  admin: 'Administrador'
+  admin: 'Administrador',
+  auditor: 'Auditor'
+}
+
+export interface SurveyRecord {
+  _id: string
+  ticketNumber: string
+  title: string
+  category: string
+  priority: string
+  createdByName: string
+  createdByEmail: string
+  satisfactionSurvey: {
+    rating: number
+    comment?: string
+    submittedAt: string
+  }
+  closedAt?: string
 }
 
 export const DEFAULT_SLAS: SLA[] = [

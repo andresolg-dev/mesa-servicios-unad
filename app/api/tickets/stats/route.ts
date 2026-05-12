@@ -23,7 +23,6 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Build base query based on role
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseQuery: any = {}
     if (user.role === 'cliente') {
