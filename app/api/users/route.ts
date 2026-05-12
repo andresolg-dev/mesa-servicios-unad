@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       phone,
     })
 
-    const userObj = newUser.toObject() as Record<string, unknown>
+    const userObj = newUser.toObject() as unknown as Record<string, unknown>
     delete userObj.password
 
     return NextResponse.json({ user: userObj }, { status: 201 })
